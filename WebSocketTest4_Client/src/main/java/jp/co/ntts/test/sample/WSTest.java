@@ -29,7 +29,7 @@ public class WSTest {
         long start = System.currentTimeMillis();
         
         for (int i = 0; i < max; i++) {
-            new Timer().schedule(new SendTask(open(i, host)), new Date(start+(max*100)));
+            new Timer().schedule(new SendTask(open(i, host)), new Date(start+(max*50)));
             Thread.sleep(10);
         }
         System.out.println("Elapsed time: " + (System.currentTimeMillis() - start));

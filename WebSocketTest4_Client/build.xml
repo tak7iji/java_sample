@@ -10,7 +10,7 @@
 				</fileset>
 			</classpath>
 			<arg value="-max" />
-			<arg value="100" />
+			<arg value="1000" />
 			<arg value="-host" />
 			<arg value="10.17.198.69" />
 		</java>

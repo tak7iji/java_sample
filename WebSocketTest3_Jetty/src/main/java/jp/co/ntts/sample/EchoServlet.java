@@ -9,7 +9,7 @@ import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
-public class WebSocketTestServlet extends WebSocketServlet {
+public class EchoServlet extends WebSocketServlet {
 
 	private static final long serialVersionUID = 1L;
 	private final Set<Connection> connections = new CopyOnWriteArraySet<Connection>();
