@@ -2,14 +2,17 @@
 
 <project name="run" default="main" basedir=".">
 
-  <target name="main">
-    <java classname="jp.co.ntts.test.sample.WSTest" fork="true">
-      <classpath>
-        <fileset dir="target/">
-          <include name="**/*.jar"/>
-        </fileset>
-      </classpath>
-      <arg value="1"/>
-    </java>
-  </target>
+	<target name="main">
+		<java classname="jp.co.ntts.test.sample.WSTest" fork="true">
+			<classpath>
+				<fileset dir="target/">
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+			<arg value="-max" />
+			<arg value="1" />
+			<arg value="-host" />
+			<arg value="localhost" />
+		</java>
+	</target>
 </project>
