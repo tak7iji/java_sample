@@ -4,12 +4,16 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
 
 public class WSTest {
+    private AtomicInteger counter = new AtomicInteger(0);
+    private Object lock;
+    
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-") && args.length >= (i + 1)) {
@@ -25,20 +29,23 @@ public class WSTest {
     }
 
     public void startTest(int max, String host) throws Exception {
-
+        lock = new Object();
         long start = System.currentTimeMillis();
+        long delay = start + 5000 + (max * 50);
 
         for (int i = 0; i < max; i++) {
-            new Timer().schedule(new SendTask(open(i, host)), new Date(start
-                    + 5000 + (max * 50)));
+            new Timer().schedule(new SendTask(open(i, host)), new Date(delay));
             Thread.sleep(10);
         }
         System.out.println("Elapsed time: "
                 + (System.currentTimeMillis() - start));
 
-        synchronized (this) {
-            wait();
+        synchronized (lock) {
+            lock.wait();
         }
+
+        Thread.sleep(1000);
+        open(max, host).getIOSocket().send("get");
     }
 
     public IOSocketClient open(final int id, String host) {
@@ -64,6 +71,11 @@ public class WSTest {
             try {
                 client.getIOSocket().send(
                         client.getId() + "," + System.currentTimeMillis());
+                if( counter.incrementAndGet() == Integer.parseInt(Options.max.getValue()) ) {
+                    synchronized(lock) {
+                        lock.notifyAll();
+                    }
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

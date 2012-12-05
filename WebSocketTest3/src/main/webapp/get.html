@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script>
+$(function(){
+    var ws = new WebSocket("ws://"+ self.location.host +"/WebSocketTestServlet3/noecho");
+    ws.onmessage = function(event) {
+            $("#container").prepend(event.data);
+    }
+    $("#send").click(function(event) {
+            ws.send("get");
+    });
+});
+</script>
+</head>
+<body>
+<input id="send" type="button" value="send">
+<div id="container"></div>
+</body>
+</html>

@@ -3,6 +3,9 @@ package jp.co.ntts.sample;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +17,7 @@ import org.apache.catalina.websocket.WsOutbound;
 
 public class NoEchoServlet extends WebSocketServlet {
     private static final Logger logger = Logger.getLogger(NoEchoServlet.class.getName());
+    private List<String> logList = Collections.synchronizedList(new ArrayList<String>(10000));
 
 	private static final long serialVersionUID = 1L;
 
@@ -35,8 +39,16 @@ public class NoEchoServlet extends WebSocketServlet {
 		}
 
 		protected void onTextMessage(CharBuffer message) throws IOException {
-		    if(message.toString().equals("hello")) return;
-		    logger.info(message.toString()+","+System.currentTimeMillis());
+		    if(message.toString().equals("hello")) {
+		        return;
+		    } else if(message.toString().equals("get")){
+		        for(String log : logList) {
+		            logger.info(log);
+		        }
+		        logList.clear();
+		    } else {
+	            logList.add(message.toString()+","+System.currentTimeMillis());
+		    }
 		}
 	}
 }
