@@ -38,6 +38,7 @@ public class WSTest {
 
         Thread.sleep(5000);
         open(max, host).getIOSocket().send("get");
+        
     }
 
     public IOSocketClient open(final int id, String host) {
@@ -67,6 +68,7 @@ public class WSTest {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            System.out.println(client.getId()+" stopped.");
         }
     }
 

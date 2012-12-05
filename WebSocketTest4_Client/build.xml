@@ -3,7 +3,7 @@
 <project name="run" default="main" basedir=".">
 
 	<target name="main">
-		<java classname="jp.co.ntts.test.sample.WSTest" fork="false">
+		<java classname="jp.co.ntts.test.sample.WSTest" fork="true">
 			<classpath>
 				<fileset dir="target/">
 					<include name="**/*.jar" />
