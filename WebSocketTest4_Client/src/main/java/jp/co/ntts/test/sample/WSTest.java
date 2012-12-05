@@ -1,18 +1,12 @@
 package jp.co.ntts.test.sample;
 
-import java.net.URI;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft_17;
-import org.java_websocket.handshake.ServerHandshake;
+import java.util.concurrent.CountDownLatch;
 
 public class WSTest {
-    private AtomicInteger counter = new AtomicInteger(0);
-    private Object lock;
+    private CountDownLatch latch;
     
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < args.length; i++) {
@@ -29,22 +23,20 @@ public class WSTest {
     }
 
     public void startTest(int max, String host) throws Exception {
-        lock = new Object();
+        latch = new CountDownLatch(max);
         long start = System.currentTimeMillis();
-        long delay = start + 5000 + (max * 50);
+        Date delay = new Date(start + 5000 + (max * 50));
 
         for (int i = 0; i < max; i++) {
-            new Timer().schedule(new SendTask(open(i, host)), new Date(delay));
+            new Timer().schedule(new SendTask(open(i, host)), delay);
             Thread.sleep(10);
         }
         System.out.println("Elapsed time: "
                 + (System.currentTimeMillis() - start));
 
-        synchronized (lock) {
-            lock.wait();
-        }
+        latch.await();
 
-        Thread.sleep(1000);
+        Thread.sleep(5000);
         open(max, host).getIOSocket().send("get");
     }
 
@@ -71,59 +63,11 @@ public class WSTest {
             try {
                 client.getIOSocket().send(
                         client.getId() + "," + System.currentTimeMillis());
-                if( counter.incrementAndGet() == Integer.parseInt(Options.max.getValue()) ) {
-                    synchronized(lock) {
-                        lock.notifyAll();
-                    }
-                }
+                latch.countDown();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-    }
-
-    class IOSocketClient {
-
-        private int id;
-        private WebSocketClient socket;
-
-        int getId() {
-            return this.id;
-        }
-
-        WebSocketClient getIOSocket() {
-            return this.socket;
-        }
-
-        void connect(final int id, String host) throws Exception {
-            socket = new WebSocketClient(new URI("http://" + host
-                    + ":8080/WebSocketTestServlet3/noecho"), new Draft_17()) {
-                @Override
-                public void onOpen(ServerHandshake handshakedata) {
-                    System.out.println(id + " >>> Connection opened.");
-                }
-
-                @Override
-                public void onMessage(String message) {
-                    System.out.println(id + " >>> " + message);
-                }
-
-                @Override
-                public void onClose(int code, String reason, boolean remote) {
-                    System.out.println(id + " >>> Connection closed.");
-                }
-
-                @Override
-                public void onError(Exception ex) {
-                    ex.printStackTrace();
-                }
-            };
-            socket.connectBlocking();
-            socket.send("hello");
-
-            this.id = id;
-        }
-
     }
 
     enum Options {
