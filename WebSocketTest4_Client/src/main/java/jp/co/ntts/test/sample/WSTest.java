@@ -1,9 +1,11 @@
 package jp.co.ntts.test.sample;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 public class WSTest {
     private CyclicBarrier barrier;
+    private CountDownLatch latch;
     
     public static void main(String[] args) throws Exception {
         for (int i = 0; i < args.length; i++) {
@@ -21,6 +23,7 @@ public class WSTest {
 
     public void startTest(int max, String host) throws Exception {
         barrier = new CyclicBarrier(max+1);
+        latch = new CountDownLatch(max);
         long start = System.currentTimeMillis();
 
         for (int i = 0; i < max; i++) {
@@ -35,14 +38,15 @@ public class WSTest {
         System.out.println(System.currentTimeMillis() + ", Start all tasks.");
         barrier.await();
         barrier.reset();
-        
-        while(barrier.getNumberWaiting() != max) {
-            Thread.sleep(2000);
-        }
-        System.out.println(System.currentTimeMillis() + ", All tasks finished.");
-        barrier.await();
 
+        // wait until all tasks finish.
+        latch.await();
+        System.out.println(System.currentTimeMillis() + ", All tasks finished.");
+
+        Thread.sleep(5000);
+        System.out.println(System.currentTimeMillis() + ", Push logs to file.");
         open(max, host).pushLog();
+        barrier.await();
     }
 
     public IOSocketClient open(final int id, String host) {
@@ -65,9 +69,13 @@ public class WSTest {
 
         public void run() {
             try {
+                // wait until all threads are ready to go.
                 barrier.await();
                 client.getIOSocket().send(
                         client.getId() + "," + System.currentTimeMillis());
+                latch.countDown();
+                
+                Thread.sleep(1000);
                 barrier.await();
                 client.close();
             } catch (Exception e) {
