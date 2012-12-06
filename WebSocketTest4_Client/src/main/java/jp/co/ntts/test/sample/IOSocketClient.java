@@ -24,7 +24,6 @@ public class IOSocketClient {
                 + ":8080/WebSocketTestServlet3/noecho"), new Draft_17()) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
-                System.out.println(id + " >>> Connection opened.");
             }
 
             @Override
@@ -34,7 +33,6 @@ public class IOSocketClient {
 
             @Override
             public void onClose(int code, String reason, boolean remote) {
-                System.out.println(id + " >>> Connection closed.");
             }
 
             @Override
@@ -46,6 +44,15 @@ public class IOSocketClient {
         socket.send("hello");
 
         this.id = id;
+    }
+
+    public void pushLog() {
+        socket.send("get");
+        socket.close();
+    }
+
+    public void close() {
+        socket.close();
     }
 
 }
