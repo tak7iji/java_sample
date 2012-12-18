@@ -26,7 +26,10 @@ public class NoEchoServlet extends WebSocketServlet {
     @Override
     protected StreamInbound createWebSocketInbound(String arg0,
             HttpServletRequest arg1) {
-        return new MessageEventHandler();
+        MessageEventHandler handler = new MessageEventHandler();
+        handler.setOutboundByteBufferSize(1024);
+        handler.setOutboundCharBufferSize(1024);
+        return handler;
     }
 
     private final class MessageEventHandler extends MessageInbound {

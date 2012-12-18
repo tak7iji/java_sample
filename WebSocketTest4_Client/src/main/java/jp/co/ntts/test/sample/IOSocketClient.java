@@ -40,7 +40,11 @@ public class IOSocketClient {
                 ex.printStackTrace();
             }
         };
-        socket.connectBlocking();
+        boolean isConnect = socket.connectBlocking();
+        while(!isConnect){
+            Thread.sleep(10);
+            isConnect = socket.getConnection().isOpen();
+        }
         socket.send("hello");
 
         this.id = id;
