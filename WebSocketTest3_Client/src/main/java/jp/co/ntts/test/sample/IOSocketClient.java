@@ -1,6 +1,7 @@
 package jp.co.ntts.test.sample;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
@@ -10,6 +11,11 @@ public class IOSocketClient {
 
     private int id;
     private WebSocketClient socket;
+    private WSTest tester;
+    
+    public IOSocketClient(WSTest tester) {
+        this.tester = tester;
+    }
 
     public int getId() {
         return this.id;
@@ -21,14 +27,35 @@ public class IOSocketClient {
 
     public void connect(final int id, String host) throws Exception {
         socket = new WebSocketClient(new URI("http://" + host
-                + ":8080/WebSocketTestServlet3/noecho"), new Draft_17()) {
+                + ":8080/WebSocketTestServlet3/echo"), new Draft_17()) {
             @Override
             public void onOpen(ServerHandshake handshakedata) {
             }
 
             @Override
+            public void onMessage(ByteBuffer message) {
+                long recv = System.currentTimeMillis();
+                tester.countDown();
+                tester.addLog(id + ", " + new String(message.array()) + ", " + recv + "\n");
+                try {
+                    tester.await();
+                } catch (Exception e) {
+                    // Ignore
+                }
+                close();
+            }
+            
+            @Override
             public void onMessage(String message) {
-                System.out.println(id + " >>> " + message);
+                long recv = System.currentTimeMillis();
+                tester.countDown();
+                tester.addLog(id + ", " + message + ", " + recv + "\n");
+                try {
+                    tester.await();
+                } catch (Exception e) {
+                    // Ignore
+                }
+                close();
             }
 
             @Override
@@ -48,11 +75,6 @@ public class IOSocketClient {
         socket.send("hello");
 
         this.id = id;
-    }
-
-    public void pushLog() {
-        socket.send("get");
-        socket.close();
     }
 
     public void close() {

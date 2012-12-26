@@ -3,18 +3,11 @@ package jp.co.ntts.sample;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.util.Calendar;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.apache.catalina.websocket.MessageInbound;
 import org.apache.catalina.websocket.StreamInbound;
@@ -23,47 +16,87 @@ import org.apache.catalina.websocket.WsOutbound;
 
 public class EchoServlet extends WebSocketServlet {
 
-	private static final long serialVersionUID = 1L;
-	private final Set<MessageEventHandler> connections = new CopyOnWriteArraySet<MessageEventHandler>();
+    private static final long serialVersionUID = 1L;
+    private List<WsOutbound> connections = Collections
+            .synchronizedList(new ArrayList<WsOutbound>());
 
-	@Override
-	protected StreamInbound createWebSocketInbound(String arg0,
-			HttpServletRequest arg1) {
-		return new MessageEventHandler();
-	}
+    @Override
+    protected StreamInbound createWebSocketInbound(String arg0,
+            HttpServletRequest arg1) {
+        MessageEventHandler handler = new MessageEventHandler();
+        handler.setOutboundByteBufferSize(1024);
+        handler.setOutboundCharBufferSize(1024);
+        return handler;
+    }
 
-	private final class MessageEventHandler extends MessageInbound {
+    private final class MessageEventHandler extends MessageInbound {
 
-		protected void onOpen(WsOutbound outbound) {
-			connections.add(this);
-                    CharBuffer buffer = CharBuffer.wrap("Welcome to the EchoServer");
-                    try {
-                        getWsOutbound().writeTextMessage(buffer);
-                    } catch (Exception ex) {}
-		}
+        protected void onOpen(WsOutbound outbound) {
+            connections.add(outbound);
+        }
 
-		protected void onClose(int status) {
-			connections.remove(this);
-		}
+        protected void onClose(int status) {
+            connections.remove(this.getWsOutbound());
+        }
 
-		protected void onBinaryMessage(ByteBuffer arg0) throws IOException {
-			throw new UnsupportedOperationException(
-					"Binary message not supported.");
-		}
+        protected void onBinaryMessage(ByteBuffer arg0) throws IOException {
+            throw new UnsupportedOperationException(
+                    "Binary message not supported.");
+        }
 
-		protected void onTextMessage(CharBuffer message) throws IOException {
-            if(message.toString().equals("hello")) return;
-			broadcast(new StringBuilder().append(">> ").append(message).toString());
-		}
+        protected void onTextMessage(CharBuffer message) throws IOException {
+            if (message.toString().equals("hello"))
+                return;
+            long start = System.currentTimeMillis();
+            broadcast3(message.toString() + ", " + start);
+            System.out.println("Errapsed: "
+                    + (System.currentTimeMillis() - start));
+        }
+
         private void broadcast(String message) {
-            for (MessageEventHandler connection : connections) {
+            int size = connections.size();
+            for (int i = 0; i < size; i++) {
                 try {
-                    connection.getWsOutbound().writeTextMessage(CharBuffer.wrap(message));
+                    connections.get(i).writeTextMessage(
+                            CharBuffer.wrap(message));
+                } catch (IOException ignore) {
+                    // Ignore
+                }
+            }
+        }
+        private void broadcast2(String message) {
+            int size = connections.size();
+            char[] ca = message.toCharArray();
+
+            for (int i = 0; i < size; i++) {
+                try {
+                    WsOutbound conn = connections.get(i);
+                    for(int j = 0; j < ca.length; j++) {
+                        conn.writeTextData(ca[j]);
+                    }
+                    conn.flush();
+                } catch (IOException ignore) {
+                    // Ignore
+                }
+            }
+        }
+        
+        private void broadcast3(String message) {
+            int size = connections.size();
+            byte[] ba = message.getBytes();
+
+            for (int i = 0; i < size; i++) {
+                try {
+                    WsOutbound conn = connections.get(i);
+                    for(int j = 0; j < ba.length; j++) {
+                        conn.writeBinaryData(ba[j]);
+                    }
+                    conn.flush();
                 } catch (IOException ignore) {
                     // Ignore
                 }
             }
         }
 
-	}
+    }
 }
