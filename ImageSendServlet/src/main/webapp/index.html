@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script>
+$(function(){
+    var ws = new WebSocket("ws://"+ self.location.host +"/ImageSender/echo");
+    ws.onmessage = function(event) {
+        $('#container').children().remove();
+        var img = new Image();
+        img.src = window.URL.createObjectURL(event.data);
+        $('#container').prepend(img);
+    }
+    $("#get").click(function(event) {
+        ws.send($("#file").val());
+	});
+});
+</script>
+</head>
+<body>
+<input id="file" type="text">
+<input id="get" type="button" value="get">
+<div id="container"></div>
+</body>
+</html>
